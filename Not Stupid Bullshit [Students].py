@@ -53,7 +53,7 @@ def preprocess_features(X):
 
 
 X_all = preprocess_features(X_all)
-print "Processed feature columns ({}):-\n{}".format(len(X_all.columns), list(X_all.columns))
+#print "Processed feature columns ({}):-\n{}".format(len(X_all.columns), list(X_all.columns))
 
 # First, decide how many training vs test samples you want
 num_all = student_data.shape[0]  # same as len(student_data)
@@ -78,12 +78,11 @@ from sklearn.metrics import make_scorer, f1_score
 from sklearn import grid_search
 
 
-def train_classifier(clf, X_train, y_train):
+def train_classifier(clf, X_train, y_train,parameters):
     print "Training {}...".format(clf.__class__.__name__)
     start = time.time()
     # clf.fit(X_train, y_train)
     # Set up the parameters we wish to tune
-    parameters = {'min_samples_split': (2, 3, 4, 5, 6, 7, 8, 9, 10)}
 
     f1_scorer = make_scorer(f1_score, pos_label="yes")
 
@@ -94,19 +93,38 @@ def train_classifier(clf, X_train, y_train):
     clsf.fit(X_train, y_train)
 
     end = time.time()
+    return clsf
     print "Done!\nTraining time (secs): {:.3f}".format(end - start)
 
 
 # TODO: Choose a model, import it and instantiate an object
-from sklearn import tree, cross_validation
+from sklearn import tree, svm,naive_bayes
 from sklearn.metrics import f1_score
 
-clf = tree.DecisionTreeClassifier()
+dtc = tree.DecisionTreeClassifier()
+svc = svm.SVC()
+nbc = naive_bayes.GaussianNB()
+
 
 # Fit model to training data
-train_classifier(clf, X_train, y_train)  # note: using entire training set here
+dtc = train_classifier(dtc, X_train, y_train,
+                       parameters={"min_samples_split":(range(1,20))})
+svc = train_classifier(svc, X_train, y_train,
+                       parameters={"C":(10.0,100.0,1000.0),"degree":(range(5,20)),
+                                    "gamma":(10.0,100.0,1000.0)})# note: using entire training set here
+#dtc = dtc.fit(X_train,y_train)
+#svc = svc.fit(X_train,y_train)
+nbc = nbc.fit(X_train,y_train)
 
-f1_scorer = make_scorer(f1_score, pos_label="yes")
-print cross_validation.cross_val_score(clf, X_all, y_all, scoring=f1_scorer)
-print f1_score()
+#grid_predict = clf.predict(X_test)
+dtc_predict = dtc.predict(X_test)
+svc_predict = svc.predict(X_test)
+nbc_predict = nbc.predict(X_test)
+
+#print "Grid Search F1 Score",f1_score(y_test,grid_predict,pos_label="yes")
+print "Decision Tree F1 score ",f1_score(y_test,dtc_predict,pos_label="yes")
+print dtc.best_params_
+print "SVM F1 score ",f1_score(y_test,svc_predict,pos_label="yes")
+print svc.best_score_
+print "Naive Bayes F1 score ",f1_score(y_test,nbc_predict,pos_label="yes")
 # print clf  # you can inspect the learned model by printing it
