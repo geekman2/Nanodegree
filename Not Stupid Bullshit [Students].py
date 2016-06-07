@@ -1,9 +1,12 @@
 # Import libraries
 import numpy as np
 import pandas as pd
+import os
+from matplotlib import pyplot as plt
 
 # Read student data
 student_data = pd.read_csv("student-data.csv")
+student_data.reindex(np.random.permutation(student_data.index))
 print "Student data read successfully!"
 # Note: The last column 'passed' is the target/label, all other are feature columns
 
@@ -57,7 +60,8 @@ X_all = preprocess_features(X_all)
 
 def train_test_split(num_train):
     num_all = student_data.shape[0]  # same as len(student_data)
-    X_all = X_all.sample(frac=1).reset_index(drop=True)
+    X_all.reindex(np.random.permutation(X_all.index))
+    y_all.reindex(np.random.permutation(y_all.index))
     num_test = num_all - num_train
 
     # TODO: Then, select features (X) and corresponding labels (y) for the training and test sets
@@ -117,11 +121,29 @@ def train_predict(clf, X_train, y_train, X_test, y_test):
     print "------------------------------------------"
     print "Training set size: {}".format(len(X_train))
     train_classifier(clf, X_train, y_train)
-    print "F1 score for training set: {}".format(predict_labels(clf, X_train, y_train))
-    print "F1 score for test set: {}".format(predict_labels(clf, X_test, y_test))
+    f1_train = predict_labels(clf, X_train, y_train)
+    print "F1 score for training set: {}".format(f1_train)
+    f1_test = predict_labels(clf, X_test, y_test)
+    print "F1 score for test set: {}".format(f1_test)
+    return f1_train,f1_test,len(X_train)
 
+
+filenumber = 1
+filename = "log{}.txt".format(filenumber)
+while os.path.isfile(filename):
+    filenumber+=1
+    filename = "log{}.txt".format(filenumber)
+log_file = open(filename,"a")
 
 for clf in models:
+    log_file.write("\n"+clf.__class__.__name__+"\n")
     for x in [100,200,300]:
         X_train,y_train,X_test,y_test = train_test_split(x)
-        train_predict(clf,X_train,y_train,X_test,y_test)
+        result = (train_predict(clf,X_train,y_train,X_test,y_test))
+        log_message = "Training set size:{}\nTraining Set F1 Score:{}%\nTest Set F1 Score:{}%\n".format(result[2],
+                                                                                                        round(result[0]*100,2),
+                                                                                                        round(result[1]*100,2))
+        log_file.write(log_message)
+
+
+
