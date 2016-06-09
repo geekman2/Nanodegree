@@ -56,12 +56,12 @@ def preprocess_features(X):
 
 
 X_all = preprocess_features(X_all)
+y_all = y_all == "yes"
+y_all = y_all.astype(int)
 #print "Processed feature columns ({}):-\n{}".format(len(X_all.columns), list(X_all.columns))
 
 def train_test_split(num_train):
     num_all = student_data.shape[0]  # same as len(student_data)
-    X_all.reindex(np.random.permutation(X_all.index))
-    y_all.reindex(np.random.permutation(y_all.index))
     num_test = num_all - num_train
 
     # TODO: Then, select features (X) and corresponding labels (y) for the training and test sets
@@ -70,8 +70,8 @@ def train_test_split(num_train):
     y_train = y_all[0:num_train] #y_all.sample(frac = frac_train)#
     X_test = X_all.sample(frac = 0.3)#X_all[300:]
     y_test = y_all.sample(frac = 0.3)#y_all[300:]
-    print "Training set: {} samples".format(X_train.shape[0])
-    print "Test set: {} samples".format(X_test.shape[0])
+    #print "Training set: {} samples".format(X_train.shape[0])
+    #print "Test set: {} samples".format(X_test.shape[0])
     return X_train,y_train,X_test,y_test
 
 
@@ -85,7 +85,7 @@ def train_classifier(clf, X_train, y_train):
     start = time.time()
     clf.fit(X_train, y_train)
     end = time.time()
-    print "Done!\nTraining time (secs): {:.3f}".format(end - start)
+    print "Training time (secs): {:.3f}".format(end - start)
 
 
 # TODO: Choose a model, import it and instantiate an object
@@ -110,12 +110,12 @@ models = [dtc,svc,nbc,knn,rfc,adc]
 from sklearn.metrics import f1_score
 
 def predict_labels(clf, features, target):
-    print "Predicting labels using {}...".format(clf.__class__.__name__)
+    #print "Predicting labels using {}...".format(clf.__class__.__name__)
     start = time.time()
     y_pred = clf.predict(features)
     end = time.time()
-    print "Done!\nPrediction time (secs): {:.3f}".format(end - start)
-    return f1_score(target.values, y_pred, pos_label='yes')
+    print "Prediction time (secs): {:.3f}".format(end - start)
+    return f1_score(target.values, y_pred)
 
 def train_predict(clf, X_train, y_train, X_test, y_test):
     print "------------------------------------------"
@@ -128,22 +128,25 @@ def train_predict(clf, X_train, y_train, X_test, y_test):
     return f1_train,f1_test,len(X_train)
 
 
-filenumber = 1
-filename = "log{}.txt".format(filenumber)
-while os.path.isfile(filename):
-    filenumber+=1
-    filename = "log{}.txt".format(filenumber)
-log_file = open(filename,"a")
-
-for clf in models:
-    log_file.write("\n"+clf.__class__.__name__+"\n")
-    for x in [100,200,300]:
-        X_train,y_train,X_test,y_test = train_test_split(x)
-        result = (train_predict(clf,X_train,y_train,X_test,y_test))
-        log_message = "Training set size:{}\nTraining Set F1 Score:{}%\nTest Set F1 Score:{}%\n".format(result[2],
-                                                                                                        round(result[0]*100,2),
-                                                                                                        round(result[1]*100,2))
-        log_file.write(log_message)
+#for clf in models:
+#    for x in [100,200,300]:
+#        X_train,y_train,X_test,y_test = train_test_split(x)
+#        train_predict(clf,X_train,y_train,X_test,y_test)
 
 
+from sklearn import grid_search
 
+X_train,y_train,X_test,y_test = train_test_split(300)
+
+def fit_model(clf,parameters,X,Y):
+    clfr = grid_search.GridSearchCV(clf,parameters,scoring="f1",cv=4)
+    return clfr.fit(X,Y)
+
+clf = fit_model(svc,
+                [{"kernel":["poly"],
+                  "degree":[1,2,3,4,5],
+                  "C":[1,10,100,1000],
+                  }],X_train,y_train)
+
+print clf.best_params_
+print predict_labels(clf,X_test,y_test)
