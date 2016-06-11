@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import os
+from sklearn.metrics import make_scorer
 from matplotlib import pyplot as plt
 
 # Read student data
@@ -134,19 +135,35 @@ def train_predict(clf, X_train, y_train, X_test, y_test):
 #        train_predict(clf,X_train,y_train,X_test,y_test)
 
 
-from sklearn import grid_search
-
 X_train,y_train,X_test,y_test = train_test_split(300)
 
-def fit_model(clf,parameters,X,Y):
-    clfr = grid_search.GridSearchCV(clf,parameters,scoring="f1",cv=4)
-    return clfr.fit(X,Y)
+from sklearn.metrics import make_scorer
+from sklearn import grid_search
+from sklearn import svm
+from sklearn.metrics import make_scorer
+# TODO: Import 'GridSearchCV' and 'make_scorer'
 
-clf = fit_model(svc,
-                [{"kernel":["poly"],
-                  "degree":[1,2,3,4,5],
-                  "C":[1,10,100,1000],
-                  }],X_train,y_train)
+# TODO: Create the parameters list you wish to tune
+parameters = [{"kernel":["poly"],
+                "degree":[1,2,3,4,5],
+                "C":[1,10,100,1000],
+             }]
 
-print clf.best_params_
-print predict_labels(clf,X_test,y_test)
+# TODO: Initialize the classifier
+clf = svm.SVC()
+
+# TODO: Make an f1 scoring function using 'make_scorer'
+f1_scorer = make_scorer("f1",greater_is_better=False)
+
+# TODO: Perform grid search on the classifier using the f1_scorer as the scoring method
+grid_obj = grid_search.GridSearchCV(clf,parameters,scoring=f1_scorer,cv=4)
+
+# TODO: Fit the grid search object to the training data and find the optimal parameters
+grid_obj = grid_obj.fit(X_train,y_train)
+
+# Get the estimator
+clf = grid_obj.best_estimator_
+
+# Report the final F1 score for training and testing after parameter tuning
+print "Tuned model has a training F1 score of {:.4f}.".format(predict_labels(clf, X_train, y_train))
+print "Tuned model has a testing F1 score of {:.4f}.".format(predict_labels(clf, X_test, y_test))
