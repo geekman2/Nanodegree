@@ -63,16 +63,9 @@ y_all = y_all.astype(int)
 
 def train_test_split(num_train):
     num_all = student_data.shape[0]  # same as len(student_data)
-    num_test = num_all - num_train
-
-    # TODO: Then, select features (X) and corresponding labels (y) for the training and test sets
-    # Note: Shuffle the data or randomly select samples to avoid any bias due to ordering in the dataset
-    X_train = X_all[0:num_train] #X_all.sample(frac = frac_train)
-    y_train = y_all[0:num_train] #y_all.sample(frac = frac_train)#
-    X_test = X_all.sample(frac = 0.3)#X_all[300:]
-    y_test = y_all.sample(frac = 0.3)#y_all[300:]
-    #print "Training set: {} samples".format(X_train.shape[0])
-    #print "Test set: {} samples".format(X_test.shape[0])
+    X_train, X_test, y_train, y_test = train_test_split(X_all, y_all,
+                                                        test_size=95, train_size=num_train,
+                                                        random_state=1791,stratify=y_all)
     return X_train,y_train,X_test,y_test
 
 
